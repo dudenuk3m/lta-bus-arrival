@@ -24,7 +24,7 @@ export function getStoredSettings(): LTASettings {
   return {
     useMockSimulation: true,
     apiKey: '',
-    backendProxyUrl: '',
+    backendProxyUrl: '/api/busarrival',
     refreshIntervalSeconds: 15,
   };
 }
@@ -289,14 +289,13 @@ export async function fetchBusArrivals(
   busStopCode: string,
   settings: LTASettings = getStoredSettings()
 ): Promise<{ services: BusArrivalService[]; isLiveAPI: boolean; rawResponse?: any; error?: string }> {
-  // If user configured a backend proxy URL or direct LTA Datamall key and mock is disabled
-  if (!settings.useMockSimulation && (settings.apiKey || settings.backendProxyUrl)) {
+  // If user disabled simulation, connect to backend proxy or direct LTA Datamall
+  if (!settings.useMockSimulation) {
     try {
-      const endpoint = settings.backendProxyUrl
-        ? `${settings.backendProxyUrl}?BusStopCode=${encodeURIComponent(busStopCode)}`
-        : `https://datamall2.mytransport.sg/ltaodataservice/v3/BusArrival?BusStopCode=${encodeURIComponent(
-            busStopCode
-          )}`;
+      const proxyUrl = settings.backendProxyUrl || '/api/busarrival';
+      const endpoint = proxyUrl.includes('?')
+        ? `${proxyUrl}&BusStopCode=${encodeURIComponent(busStopCode)}`
+        : `${proxyUrl}?BusStopCode=${encodeURIComponent(busStopCode)}`;
 
       const headers: Record<string, string> = {
         Accept: 'application/json',
@@ -311,7 +310,8 @@ export async function fetchBusArrivals(
       });
 
       if (!res.ok) {
-        throw new Error(`LTA API returned status ${res.status}: ${res.statusText}`);
+        const errJson = await res.json().catch(() => null);
+        throw new Error(errJson?.message || errJson?.error || `API returned status ${res.status}: ${res.statusText}`);
       }
 
       const json = await res.json();
@@ -369,7 +369,7 @@ export async function fetchBusArrivals(
       return {
         services: simulated,
         isLiveAPI: false,
-        error: `Could not reach live API (${err.message}). Using real-time simulated feed.`,
+        error: `Could not reach live API: ${err.message}. Using real-time simulated feed.`,
       };
     }
   }

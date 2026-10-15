@@ -159,11 +159,11 @@ app.get('/api/bus-arrivals', async (req, res) => {
                   type="text"
                   value={form.backendProxyUrl}
                   onChange={(e) => setForm({ ...form, backendProxyUrl: e.target.value })}
-                  placeholder="e.g. /api/bus-arrivals or https://your-server.com/arrivals"
+                  placeholder="/api/busarrival"
                   className="w-full px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
                 />
                 <p className="text-[10px] text-slate-500 mt-1">
-                  Avoids browser CORS restrictions when contacting LTA DataMall directly.
+                  Built-in serverless proxy at <code className="text-emerald-400">/api/busarrival</code> that forwards to LTA DataMall v3.
                 </p>
               </div>
 
